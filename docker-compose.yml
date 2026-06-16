@@ -1,0 +1,27 @@
+services:
+  codex-warmup:
+    build: .
+    container_name: codex-warmup
+    restart: unless-stopped
+
+    environment:
+      CRON_SCHEDULE: "${CRON_SCHEDULE:-15 6 * * *}"
+      TZ: "${TZ:-Europe/Amsterdam}"
+      CODEX_WARMUP_PROMPT: "${CODEX_WARMUP_PROMPT:-Warmup only. Reply OK. Do not inspect or modify files.}"
+      CODEX_SANDBOX: "${CODEX_SANDBOX:-read-only}"
+      CODEX_TIMEOUT_SECONDS: "${CODEX_TIMEOUT_SECONDS:-120}"
+      CODEX_RETRIES: "${CODEX_RETRIES:-2}"
+      CODEX_RETRY_DELAY_SECONDS: "${CODEX_RETRY_DELAY_SECONDS:-30}"
+      CODEX_ACCOUNTS: "${CODEX_ACCOUNTS:-default}"
+
+    volumes:
+      - ./codex-homes:/codex-homes
+      - ./workspace:/workspace
+      - ./logs:/var/log/codex-warmup
+
+    working_dir: /workspace
+
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"

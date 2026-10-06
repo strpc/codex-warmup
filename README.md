@@ -41,8 +41,8 @@ Why Docker:
 - no Codex CLI install on the host
 - no host cron setup
 - auth lives in local `codex-homes/` folders
-- logs go to `logs/`
-- `.dockerignore` keeps auth, logs, `.env`, and workspace data out of the image
+- logs are available through Docker
+- `.dockerignore` keeps auth, `.env`, and workspace data out of the image
 
 ## Quick Start 🚀
 
@@ -101,6 +101,7 @@ Edit `.env`:
 
 ```bash
 CRON_SCHEDULE="15 6 * * *"
+CODEX_UPDATE_CRON_SCHEDULE="0 4 * * *"
 TZ="Europe/Amsterdam"
 CODEX_WARMUP_PROMPT="Warmup only. Reply OK. Do not inspect or modify files."
 CODEX_SANDBOX="read-only"
@@ -110,7 +111,8 @@ CODEX_RETRY_DELAY_SECONDS="30"
 CODEX_ACCOUNTS="default"
 ```
 
-The default schedule runs every day at 6:15 AM in `Europe/Amsterdam`.
+The default warmup schedule runs every day at 6:15 AM in `Europe/Amsterdam`.
+The default Codex update schedule runs every day at 4:00 AM.
 
 Need a cron expression? Use https://crontab.guru/.
 
@@ -125,6 +127,9 @@ CRON_SCHEDULE="0 6 * * *"
 
 # Weekdays at 6:15 AM
 CRON_SCHEDULE="15 6 * * 1-5"
+
+# Update Codex every Sunday at 4:00 AM
+CODEX_UPDATE_CRON_SCHEDULE="0 4 * * 0"
 ```
 
 After changing `.env`, recreate the container:
@@ -164,14 +169,12 @@ Warmup runs accounts sequentially. If one account fails, the others still run. T
 Container logs:
 
 ```bash
+docker logs -f codex-warmup
+# or
 docker compose logs -f
 ```
 
-Cron logs:
-
-```bash
-tail -f logs/cron.log
-```
+Both warmup and `codex update` output are written to the container logs.
 
 Container status and healthcheck:
 
@@ -179,7 +182,7 @@ Container status and healthcheck:
 docker compose ps
 ```
 
-Installed cron entry:
+Installed cron entries:
 
 ```bash
 docker compose exec codex-warmup crontab -l

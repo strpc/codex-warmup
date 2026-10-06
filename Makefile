@@ -19,5 +19,6 @@ config:
 	docker compose config
 
 check:
-	bash -n entrypoint.sh warmup.sh healthcheck.sh
+	bash -n entrypoint.sh warmup.sh healthcheck.sh tests/check-cron-config.sh
+	bash tests/check-cron-config.sh
 	docker compose config >/dev/null

@@ -18,6 +18,11 @@ if ! crontab -l 2>/dev/null | grep -q '/usr/local/bin/warmup.sh'; then
   exit 1
 fi
 
+if ! crontab -l 2>/dev/null | grep -q 'codex update'; then
+  echo "codex update cron entry is missing" >&2
+  exit 1
+fi
+
 IFS=',' read -r -a accounts <<< "$CODEX_ACCOUNTS"
 
 for account in "${accounts[@]}"; do

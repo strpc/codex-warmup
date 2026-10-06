@@ -1,8 +1,6 @@
-logs/*
 workspace/*
 codex-homes/*
 
-!logs/.gitkeep
 !workspace/.gitkeep
 !codex-homes/.gitkeep
 

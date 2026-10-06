@@ -19,7 +19,7 @@ COPY warmup.sh /usr/local/bin/warmup.sh
 COPY healthcheck.sh /usr/local/bin/healthcheck.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/warmup.sh /usr/local/bin/healthcheck.sh \
-    && mkdir -p /root/.codex /codex-homes /workspace /var/log/codex-warmup /run/codex-warmup
+    && mkdir -p /root/.codex /codex-homes /workspace /run/codex-warmup
 
 WORKDIR /workspace
 

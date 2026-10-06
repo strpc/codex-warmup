@@ -6,6 +6,7 @@ services:
 
     environment:
       CRON_SCHEDULE: "${CRON_SCHEDULE:-15 6 * * *}"
+      CODEX_UPDATE_CRON_SCHEDULE: "${CODEX_UPDATE_CRON_SCHEDULE:-0 4 * * *}"
       TZ: "${TZ:-Europe/Amsterdam}"
       CODEX_WARMUP_PROMPT: "${CODEX_WARMUP_PROMPT:-Warmup only. Reply OK. Do not inspect or modify files.}"
       CODEX_SANDBOX: "${CODEX_SANDBOX:-read-only}"
@@ -17,7 +18,6 @@ services:
     volumes:
       - ./codex-homes:/codex-homes
       - ./workspace:/workspace
-      - ./logs:/var/log/codex-warmup
 
     working_dir: /workspace
 

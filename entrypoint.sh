@@ -2,6 +2,7 @@
 set -euo pipefail
 
 : "${CRON_SCHEDULE:=15 6 * * *}"
+: "${CODEX_UPDATE_CRON_SCHEDULE:=0 4 * * *}"
 : "${TZ:=Europe/Amsterdam}"
 : "${CODEX_WARMUP_PROMPT:=Warmup only. Reply OK. Do not inspect or modify files.}"
 : "${CODEX_SANDBOX:=read-only}"
@@ -23,23 +24,24 @@ validate_integer() {
 }
 
 validate_cron_schedule() {
-  local schedule="$1"
+  local name="$1"
+  local schedule="$2"
   local -a fields
 
   if [[ "$schedule" == *$'\n'* || "$schedule" == *$'\r'* ]]; then
-    echo "[entrypoint] CRON_SCHEDULE must be a single line" >&2
+    echo "[entrypoint] ${name} must be a single line" >&2
     exit 1
   fi
 
   read -r -a fields <<< "$schedule"
   if [[ "${#fields[@]}" -ne 5 ]]; then
-    echo "[entrypoint] CRON_SCHEDULE must contain exactly 5 fields: ${schedule}" >&2
+    echo "[entrypoint] ${name} must contain exactly 5 fields: ${schedule}" >&2
     exit 1
   fi
 
   for field in "${fields[@]}"; do
     if [[ ! "$field" =~ ^[A-Za-z0-9_*/?,.-]+$ ]]; then
-      echo "[entrypoint] CRON_SCHEDULE contains unsupported characters: ${schedule}" >&2
+      echo "[entrypoint] ${name} contains unsupported characters: ${schedule}" >&2
       exit 1
     fi
   done
@@ -78,7 +80,8 @@ validate_timezone() {
   fi
 }
 
-validate_cron_schedule "$CRON_SCHEDULE"
+validate_cron_schedule CRON_SCHEDULE "$CRON_SCHEDULE"
+validate_cron_schedule CODEX_UPDATE_CRON_SCHEDULE "$CODEX_UPDATE_CRON_SCHEDULE"
 validate_timezone "$TZ"
 validate_integer CODEX_TIMEOUT_SECONDS "$CODEX_TIMEOUT_SECONDS"
 validate_integer CODEX_RETRIES "$CODEX_RETRIES"
@@ -90,7 +93,7 @@ if ! command -v codex >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p /root/.codex /codex-homes /workspace /var/log/codex-warmup /run/codex-warmup
+mkdir -p /root/.codex /codex-homes /workspace /run/codex-warmup
 chmod 700 /root/.codex || true
 
 {
@@ -110,17 +113,19 @@ SHELL=/bin/bash
 PATH=/root/.local/bin:/root/.codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 TZ=${TZ}
 
-${CRON_SCHEDULE} /usr/local/bin/warmup.sh >> /var/log/codex-warmup/cron.log 2>&1
+${CRON_SCHEDULE} /usr/local/bin/warmup.sh > /proc/1/fd/1 2> /proc/1/fd/2
+${CODEX_UPDATE_CRON_SCHEDULE} codex update > /proc/1/fd/1 2> /proc/1/fd/2
 EOF
 
 chmod 0644 /etc/cron.d/codex-warmup
 crontab /etc/cron.d/codex-warmup
 
 echo "[entrypoint] schedule: ${CRON_SCHEDULE}"
+echo "[entrypoint] update schedule: ${CODEX_UPDATE_CRON_SCHEDULE}"
 echo "[entrypoint] timezone: ${TZ}"
 echo "[entrypoint] accounts: ${CODEX_ACCOUNTS}"
 echo "[entrypoint] auth root: /codex-homes"
-echo "[entrypoint] logs: /var/log/codex-warmup/cron.log"
+echo "[entrypoint] logs: container stdout/stderr"
 
 IFS=',' read -r -a accounts <<< "$CODEX_ACCOUNTS"
 for account in "${accounts[@]}"; do
